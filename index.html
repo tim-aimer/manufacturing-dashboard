@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manufacturing Shortage Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+    <div id="app" class="p-8">
+        <div class="text-center py-20">
+            <div class="inline-block w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <h2 class="text-2xl font-bold text-white mb-2">Loading Dashboard...</h2>
+            <p class="text-slate-400">Connecting to Firebase</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, get, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCklXBuH2HkvGp1y-6HA7CaC3URod2LuMc",
+            authDomain: "manufacturing-dashboard-2469f.firebaseapp.com",
+            databaseURL: "https://manufacturing-dashboard-2469f-default-rtdb.firebaseio.com",
+            projectId: "manufacturing-dashboard-2469f",
+            storageBucket: "manufacturing-dashboard-2469f.firebasestorage.app",
+            messagingSenderId: "63916407854",
+            appId: "1:63916407854:web:4a2c2c0204df03f579f3bf"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Initial data
+        const initialInventory = {
+            'M12 FIELD INSTALLABLE CONNECTOR': 20,
+            'Lidar, OS1 Rev 7': 21,
+            'Camera, Excelsense TC10': 65,
+            'DIS Inclinometer - 1 axis - endpoint': 91,
+            'DIS Inclinometer - 1 axis - mid-point': 25,
+            'DIS Inclinometer - 2 axis': 59,
+            'Lidar OS-Dome-Rev7': 0,
+            'Sensor, SICK Single Axis Inclinometer': 15,
+            'Starlink, High Performance, Dish, Gen3': 17,
+            'Neuosys Roof Compute, SEMIL-2047GC-AIM01': 3,
+            'INS-DU, Septentrio': 14,
+            'Lidar Cable (Steel) (6m) (M12+Deutsch)': 39,
+            'Termination resistor, CAN, SICK Sensor': 27,
+            'Premio, (internal AIM board)': 1,
+            'AIM Wireless Safety Remote v1.2': 0,
+            'AIM Wireless Safety Receiver v1.2': 1,
+            'Antaira 8 Port External POE Switch': 7,
+            'VAR-Premio, (internal AIM board)': 0,
+        };
+
+        const initialMachineConfigs = {
+            'Medium Dozer': {
+                'M12 FIELD INSTALLABLE CONNECTOR': 5,
+                'Lidar, OS1 Rev 7': 1,
+                'Camera, Excelsense TC10': 4,
+                'DIS Inclinometer - 1 axis - endpoint': 1,
+                'DIS Inclinometer - 2 axis': 1,
+                'Sensor, SICK Single Axis Inclinometer': 1,
+                'Starlink, High Performance, Dish, Gen3': 1,
+                'Neuosys Roof Compute, SEMIL-2047GC-AIM01': 1,
+                'INS-DU, Septentrio': 1,
+                'Lidar Cable (Steel) (6m) (M12+Deutsch)': 1,
+                'Termination resistor, CAN, SICK Sensor': 1,
+                'AIM Wireless Safety Remote v1.2': 1,
+                'AIM Wireless Safety Receiver v1.2': 1,
+                'Antaira 8 Port External POE Switch': 1,
+            },
+            'Large Dozer': {
+                'M12 FIELD INSTALLABLE CONNECTOR': 5,
+                'Lidar, OS1 Rev 7': 1,
+                'Camera, Excelsense TC10': 4,
+                'DIS Inclinometer - 1 axis - endpoint': 1,
+                'DIS Inclinometer - 1 axis - mid-point': 3,
+                'DIS Inclinometer - 2 axis': 1,
+                'Sensor, SICK Single Axis Inclinometer': 1,
+                'Starlink, High Performance, Dish, Gen3': 1,
+                'Neuosys Roof Compute, SEMIL-2047GC-AIM01': 1,
+                'INS-DU, Septentrio': 1,
+                'Lidar Cable (Steel) (6m) (M12+Deutsch)': 1,
+                'Termination resistor, CAN, SICK Sensor': 1,
+                'Premio, (internal AIM board)': 1,
+                'AIM Wireless Safety Remote v1.2': 1,
+                'AIM Wireless Safety Receiver v1.2': 1,
+                'Antaira 8 Port External POE Switch': 1,
+            },
+            'Excavator': {
+                'M12 FIELD INSTALLABLE CONNECTOR': 5,
+                'Lidar, OS1 Rev 7': 1,
+                'Camera, Excelsense TC10': 4,
+                'DIS Inclinometer - 1 axis - endpoint': 1,
+                'DIS Inclinometer - 2 axis': 1,
+                'Lidar OS-Dome-Rev7': 1,
+                'Sensor, SICK Single Axis Inclinometer': 1,
+                'Starlink, High Performance, Dish, Gen3': 1,
+                'Neuosys Roof Compute, SEMIL-2047GC-AIM01': 1,
+                'INS-DU, Septentrio': 1,
+                'Lidar Cable (Steel) (6m) (M12+Deutsch)': 1,
+                'Termination resistor, CAN, SICK Sensor': 1,
+                'AIM Wireless Safety Remote v1.2': 1,
+                'AIM Wireless Safety Receiver v1.2': 1,
+                'Antaira 8 Port External POE Switch': 1,
+                'VAR-Premio, (internal AIM board)': 1,
+            },
+            'Wheel Loader': {
+                'M12 FIELD INSTALLABLE CONNECTOR': 5,
+                'Camera, Excelsense TC10': 4,
+                'DIS Inclinometer - 1 axis - endpoint': 1,
+                'DIS Inclinometer - 1 axis - mid-point': 2,
+                'DIS Inclinometer - 2 axis': 1,
+                'Lidar OS-Dome-Rev7': 1,
+                'Sensor, SICK Single Axis Inclinometer': 1,
+                'Starlink, High Performance, Dish, Gen3': 1,
+                'Neuosys Roof Compute, SEMIL-2047GC-AIM01': 1,
+                'INS-DU, Septentrio': 1,
+                'Lidar Cable (Steel) (6m) (M12+Deutsch)': 1,
+                'Termination resistor, CAN, SICK Sensor': 1,
+                'AIM Wireless Safety Remote v1.2': 1,
+                'AIM Wireless Safety Receiver v1.2': 1,
+                'Antaira 8 Port External POE Switch': 1,
+                'VAR-Premio, (internal AIM board)': 1,
+            },
+        };
+
+        // State
+        let inventory = {};
+        let machineConfigs = {};
+        let orders = {}; // Track ordered parts
+        let selectedMachine = null;
+        let editingMachines = false;
+        let addingPart = false;
+        let addingOrder = false;
+
+        // Sanitize keys for Firebase (replace invalid characters)
+        function sanitizeKey(key) {
+            return key.replace(/[.#$\/\[\]]/g, '_');
+        }
+
+        // Create a mapping of sanitized keys to original names
+        const keyMapping = {};
+        Object.keys(initialInventory).forEach(key => {
+            keyMapping[sanitizeKey(key)] = key;
+        });
+        Object.keys(initialMachineConfigs).forEach(key => {
+            keyMapping[sanitizeKey(key)] = key;
+        });
+
+        // Initialize Firebase data
+        async function initializeData() {
+            const inventoryRef = ref(database, 'inventory');
+            const machinesRef = ref(database, 'machines');
+            
+            const inventorySnap = await get(inventoryRef);
+            const machinesSnap = await get(machinesRef);
+            
+            // If no data exists, seed with initial data (using sanitized keys)
+            if (!inventorySnap.exists()) {
+                const sanitizedInventory = {};
+                Object.entries(initialInventory).forEach(([key, value]) => {
+                    sanitizedInventory[sanitizeKey(key)] = value;
+                });
+                await set(inventoryRef, sanitizedInventory);
+            }
+            
+            if (!machinesSnap.exists()) {
+                const sanitizedMachines = {};
+                Object.entries(initialMachineConfigs).forEach(([machine, parts]) => {
+                    sanitizedMachines[sanitizeKey(machine)] = {};
+                    Object.entries(parts).forEach(([part, qty]) => {
+                        sanitizedMachines[sanitizeKey(machine)][sanitizeKey(part)] = qty;
+                    });
+                });
+                await set(machinesRef, sanitizedMachines);
+            }
+        }
+
+        // Listen for inventory changes
+        function listenToInventory() {
+            const inventoryRef = ref(database, 'inventory');
+            onValue(inventoryRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                inventory = {};
+                // Convert sanitized keys back to original names
+                Object.entries(data).forEach(([sanitizedKey, value]) => {
+                    const originalKey = keyMapping[sanitizedKey] || sanitizedKey;
+                    inventory[originalKey] = value;
+                });
+                render();
+            });
+        }
+
+        // Listen for machine config changes
+        function listenToMachines() {
+            const machinesRef = ref(database, 'machines');
+            onValue(machinesRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                machineConfigs = {};
+                // Convert sanitized keys back to original names
+                Object.entries(data).forEach(([sanitizedMachine, parts]) => {
+                    const originalMachine = keyMapping[sanitizedMachine] || sanitizedMachine;
+                    machineConfigs[originalMachine] = {};
+                    Object.entries(parts).forEach(([sanitizedPart, qty]) => {
+                        const originalPart = keyMapping[sanitizedPart] || sanitizedPart;
+                        machineConfigs[originalMachine][originalPart] = qty;
+                    });
+                });
+                render();
+            });
+        }
+
+        // Listen for orders
+        function listenToOrders() {
+            const ordersRef = ref(database, 'orders');
+            onValue(ordersRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                orders = {};
+                // Convert sanitized keys back to original names
+                Object.entries(data).forEach(([sanitizedPart, orderData]) => {
+                    const originalPart = keyMapping[sanitizedPart] || sanitizedPart;
+                    orders[originalPart] = orderData;
+                });
+                render();
+            });
+        }
+
+        // Update inventory
+        window.updateInventory = async function(part, value) {
+            const qty = parseInt(value) || 0;
+            const sanitizedPart = sanitizeKey(part);
+            const inventoryRef = ref(database, `inventory/${sanitizedPart}`);
+            await set(inventoryRef, qty);
+        };
+
+        // Update machine configuration
+        window.updateMachineConfig = async function(machine, part, value) {
+            const qty = parseInt(value) || 0;
+            const sanitizedMachine = sanitizeKey(machine);
+            const sanitizedPart = sanitizeKey(part);
+            const configRef = ref(database, `machines/${sanitizedMachine}/${sanitizedPart}`);
+            
+            if (qty > 0) {
+                await set(configRef, qty);
+            } else {
+                // Remove part if quantity is 0
+                await set(configRef, null);
+            }
+        };
+
+        // Rename machine
+        window.renameMachine = async function(oldName, newName) {
+            if (!newName || newName.trim() === '') {
+                alert('Machine name cannot be empty');
+                return;
+            }
+            
+            if (oldName === newName) return;
+            
+            // Get the old machine config
+            const oldConfig = machineConfigs[oldName] || {};
+            
+            // Delete old machine
+            const oldRef = ref(database, `machines/${sanitizeKey(oldName)}`);
+            await set(oldRef, null);
+            
+            // Create new machine with same config
+            const sanitizedNew = sanitizeKey(newName);
+            const newMachineConfig = {};
+            Object.entries(oldConfig).forEach(([part, qty]) => {
+                newMachineConfig[sanitizeKey(part)] = qty;
+            });
+            const newRef = ref(database, `machines/${sanitizedNew}`);
+            await set(newRef, newMachineConfig);
+            
+            // Update key mapping
+            keyMapping[sanitizedNew] = newName;
+        };
+
+        // Add new machine
+        window.addNewMachine = async function(machineName) {
+            if (!machineName || machineName.trim() === '') {
+                alert('Machine name cannot be empty');
+                return;
+            }
+            
+            const sanitizedMachine = sanitizeKey(machineName);
+            
+            // Check if machine already exists
+            if (machineConfigs[machineName]) {
+                alert('A machine with this name already exists');
+                return;
+            }
+            
+            // Create empty machine config
+            const machineRef = ref(database, `machines/${sanitizedMachine}`);
+            await set(machineRef, {});
+            
+            // Update key mapping
+            keyMapping[sanitizedMachine] = machineName;
+        };
+
+        // Add or update order
+        window.addOrder = async function(partName, quantity, arrivalDate) {
+            if (!partName || partName.trim() === '') {
+                alert('Part name cannot be empty');
+                return;
+            }
+            
+            const qty = parseInt(quantity) || 0;
+            if (qty <= 0) {
+                alert('Quantity must be greater than 0');
+                return;
+            }
+            
+            if (!arrivalDate) {
+                alert('Arrival date is required');
+                return;
+            }
+            
+            const sanitizedPart = sanitizeKey(partName);
+            const orderRef = ref(database, `orders/${sanitizedPart}`);
+            await set(orderRef, {
+                quantity: qty,
+                arrivalDate: arrivalDate
+            });
+            
+            // Update key mapping if needed
+            if (!keyMapping[sanitizedPart]) {
+                keyMapping[sanitizedPart] = partName;
+            }
+            
+            addingOrder = false;
+            render();
+        };
+
+        // Delete order
+        window.deleteOrder = async function(partName) {
+            if (!confirm(`Remove order for ${partName}?`)) {
+                return;
+            }
+            
+            const sanitizedPart = sanitizeKey(partName);
+            const orderRef = ref(database, `orders/${sanitizedPart}`);
+            await set(orderRef, null);
+        };
+
+        // Delete part (and all references)
+        window.deletePart = async function(partName) {
+            if (!confirm(`Delete "${partName}" completely?\n\nThis will:\n• Remove it from inventory\n• Remove it from all machines\n• Remove any orders for this part\n\nThis cannot be undone.`)) {
+                return;
+            }
+            
+            const sanitizedPart = sanitizeKey(partName);
+            
+            // Delete from inventory
+            const inventoryRef = ref(database, `inventory/${sanitizedPart}`);
+            await set(inventoryRef, null);
+            
+            // Delete from all machine configurations
+            const machines = Object.keys(machineConfigs);
+            for (const machine of machines) {
+                const sanitizedMachine = sanitizeKey(machine);
+                const machinePartRef = ref(database, `machines/${sanitizedMachine}/${sanitizedPart}`);
+                await set(machinePartRef, null);
+            }
+            
+            // Delete any orders
+            const orderRef = ref(database, `orders/${sanitizedPart}`);
+            await set(orderRef, null);
+        };
+
+        // Add new part
+        window.addNewPart = async function(partName, initialQty) {
+            if (!partName || partName.trim() === '') {
+                alert('Part name cannot be empty');
+                return;
+            }
+            
+            const qty = parseInt(initialQty) || 0;
+            const sanitizedPart = sanitizeKey(partName);
+            
+            // Add to inventory
+            const inventoryRef = ref(database, `inventory/${sanitizedPart}`);
+            await set(inventoryRef, qty);
+            
+            // Update key mapping
+            keyMapping[sanitizedPart] = partName;
+            
+            // Close add part form
+            addingPart = false;
+            render();
+        };
+
+        // Show/hide editors
+        window.showMachineEditor = function() {
+            editingMachines = true;
+            selectedMachine = null;
+            render();
+        };
+
+        window.hideMachineEditor = function() {
+            editingMachines = false;
+            render();
+        };
+
+        window.showAddPart = function() {
+            addingPart = true;
+            render();
+        };
+
+        window.hideAddPart = function() {
+            addingPart = false;
+            render();
+        };
+
+        // Prompt to rename machine
+        window.renameMachinePrompt = function(oldName) {
+            const newName = prompt(`Rename "${oldName}" to:`, oldName);
+            if (newName && newName.trim() !== '' && newName !== oldName) {
+                renameMachine(oldName, newName.trim());
+            }
+        };
+
+        // Prompt to add new machine
+        window.addNewMachinePrompt = function() {
+            const machineName = prompt('Enter new machine name:');
+            if (machineName && machineName.trim() !== '') {
+                addNewMachine(machineName.trim());
+            }
+        };
+
+        // Show/hide order form
+        window.showAddOrder = function() {
+            addingOrder = true;
+            render();
+        };
+
+        window.hideAddOrder = function() {
+            addingOrder = false;
+            render();
+        };
+
+        // Calculate max machines
+        function calculateMaxMachines(machineType, includeOrders = false) {
+            const partsNeeded = machineConfigs[machineType];
+            if (!partsNeeded) return { maxMachines: 0, bottleneckPart: '' };
+            
+            let maxMachines = Infinity;
+            let bottleneckPart = '';
+            
+            for (const [part, needed] of Object.entries(partsNeeded)) {
+                let available = inventory[part] || 0;
+                
+                // Include ordered parts if requested
+                if (includeOrders && orders[part]) {
+                    available += orders[part].quantity;
+                }
+                
+                const possibleMachines = Math.floor(available / needed);
+                
+                if (possibleMachines < maxMachines) {
+                    maxMachines = possibleMachines;
+                    bottleneckPart = part;
+                }
+            }
+            
+            return { 
+                maxMachines: maxMachines === Infinity ? 0 : maxMachines, 
+                bottleneckPart 
+            };
+        }
+
+        // Render overview
+        function renderOverview() {
+            const allCapacity = Object.keys(machineConfigs).map(type => ({
+                type,
+                ...calculateMaxMachines(type)
+            }));
+            
+            const totalParts = Object.values(inventory).reduce((a, b) => a + b, 0);
+            const totalOnOrder = Object.values(orders).reduce((sum, order) => sum + (order.quantity || 0), 0);
+            
+            const allParts = new Set();
+            Object.values(machineConfigs).forEach(config => {
+                Object.keys(config).forEach(part => allParts.add(part));
+            });
+            
+            return `
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-4xl font-bold text-white mb-2">Manufacturing Shortage Report</h1>
+                                <p class="text-slate-400 text-lg">Real-time inventory tracking • Click any number to edit</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-2 bg-green-900 bg-opacity-20 border border-green-700 rounded px-3 py-2">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span class="text-green-400 text-sm font-semibold">Live</span>
+                                </div>
+                                <button onclick="showAddOrder()" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded transition-colors font-semibold">
+                                    📦 Add Order
+                                </button>
+                                <button onclick="showAddPart()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors font-semibold">
+                                    + Add Part
+                                </button>
+                                <button onclick="showMachineEditor()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors font-semibold">
+                                    ⚙️ Edit Machines
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-6 shadow-lg">
+                            <h3 class="text-purple-100 text-sm font-semibold uppercase tracking-wide mb-2">Machine Types</h3>
+                            <div class="text-5xl font-bold text-white mb-1">${Object.keys(machineConfigs).length}</div>
+                            <p class="text-purple-200 text-sm">different configurations</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-6 shadow-lg">
+                            <h3 class="text-green-100 text-sm font-semibold uppercase tracking-wide mb-2">Total Parts in Stock</h3>
+                            <div class="text-5xl font-bold text-white mb-1">${totalParts}</div>
+                            <p class="text-green-200 text-sm">individual components</p>
+                            ${totalOnOrder > 0 ? `
+                                <div class="mt-3 pt-3 border-t border-green-500">
+                                    <p class="text-green-100 text-xs">On order:</p>
+                                    <p class="text-2xl font-bold text-white">+${totalOnOrder}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-lg shadow-lg border border-slate-700 p-6 mb-8">
+                        <h3 class="text-xl font-bold text-white mb-4">Production Capacity by Machine Type</h3>
+                        <p class="text-slate-400 text-sm mb-4">Note: These numbers are independent. You cannot build all machines simultaneously as they share common parts.</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            ${allCapacity.map(machine => `
+                                <div class="bg-slate-900 rounded p-4 border border-slate-700">
+                                    <p class="text-slate-400 text-xs mb-1">${machine.type}</p>
+                                    <p class="text-3xl font-bold text-white">${machine.maxMachines}</p>
+                                    <p class="text-slate-500 text-xs mt-1">machines</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        ${allCapacity.map((machine, index) => `
+                            <div onclick="showMachine('${machine.type}')" class="bg-slate-800 rounded-lg p-6 shadow-lg border border-slate-700 hover:border-blue-500 transition-all cursor-pointer hover:shadow-xl group">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                                            ${machine.type}
+                                        </h3>
+                                        <p class="text-slate-500 text-xs mt-1">${index > 0 ? 'OR' : ''} Click for details</p>
+                                    </div>
+                                    <span class="text-slate-400 group-hover:text-blue-400 text-2xl">→</span>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-slate-400 text-sm mb-1">Can Build</p>
+                                        <p class="text-3xl font-bold text-white">${machine.maxMachines}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-slate-400 text-sm mb-1">Parts Required</p>
+                                        <p class="text-3xl font-bold text-white">${Object.keys(machineConfigs[machine.type]).length}</p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-slate-900 rounded p-3">
+                                    <p class="text-slate-400 text-xs mb-1">Bottleneck Part</p>
+                                    <p class="text-red-400 font-semibold text-sm truncate">${machine.bottleneckPart || 'None'}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="bg-slate-800 rounded-lg shadow-xl overflow-hidden">
+                        <div class="bg-slate-700 px-6 py-4 border-b border-slate-600">
+                            <h2 class="text-xl font-bold text-white">All Parts Inventory</h2>
+                            <p class="text-slate-400 text-sm mt-1">Click any quantity to edit • Updates sync instantly to all users</p>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-750">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Part Name</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">In Stock</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">On Order</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">Arriving</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">Utilization</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Used In Machines</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    ${Array.from(allParts).sort().map(part => {
+                                        const machinesUsing = Object.keys(machineConfigs).filter(m => 
+                                            machineConfigs[m][part] !== undefined
+                                        );
+                                        
+                                        const order = orders[part];
+                                        const hasOrder = !!order;
+                                        
+                                        let maxUtil = 0;
+                                        for (const machine of machinesUsing) {
+                                            const needed = machineConfigs[machine][part];
+                                            const available = inventory[part] || 0;
+                                            const machineMax = calculateMaxMachines(machine).maxMachines;
+                                            const neededForMax = machineMax * needed;
+                                            const util = available > 0 ? (neededForMax / available) * 100 : 0;
+                                            maxUtil = Math.max(maxUtil, util);
+                                        }
+                                        
+                                        // Format date
+                                        let arrivalDateFormatted = '';
+                                        if (hasOrder && order.arrivalDate) {
+                                            const date = new Date(order.arrivalDate);
+                                            arrivalDateFormatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                        }
+                                        
+                                        return `
+                                            <tr class="hover:bg-slate-750 transition-colors group">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="text-sm font-medium text-white">${part}</span>
+                                                        <button 
+                                                            onclick="deletePart('${part}')" 
+                                                            class="text-red-400 hover:text-red-300 text-xs ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            title="Delete part"
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    <input 
+                                                        type="number" 
+                                                        value="${inventory[part] || 0}"
+                                                        onchange="updateInventory('${part}', this.value)"
+                                                        class="bg-slate-700 text-white text-center px-3 py-1 rounded border border-slate-600 focus:border-blue-500 focus:outline-none w-20 font-semibold"
+                                                    />
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    ${hasOrder ? `
+                                                        <div class="flex items-center justify-center gap-2">
+                                                            <span class="text-orange-400 font-semibold">${order.quantity}</span>
+                                                            <button onclick="deleteOrder('${part}')" class="text-red-400 hover:text-red-300 text-xs" title="Remove order">
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ` : `
+                                                        <button onclick="showAddOrder()" class="text-slate-500 hover:text-slate-400 text-xs">
+                                                            + Add
+                                                        </button>
+                                                    `}
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    ${hasOrder ? `
+                                                        <span class="text-slate-400 text-xs">${arrivalDateFormatted}</span>
+                                                    ` : `
+                                                        <span class="text-slate-600 text-xs">-</span>
+                                                    `}
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
+                                                            <div
+                                                                class="h-full transition-all ${maxUtil >= 90 ? 'bg-red-500' : 'bg-green-500'}"
+                                                                style="width: ${Math.min(100, maxUtil)}%"
+                                                            ></div>
+                                                        </div>
+                                                        <span class="text-xs text-slate-400 w-12 text-right">
+                                                            ${maxUtil.toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex flex-wrap gap-2">
+                                                        ${machinesUsing.length === 1 ? `
+                                                            <span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded font-semibold">
+                                                                UNIQUE: ${machinesUsing[0]}
+                                                            </span>
+                                                        ` : machinesUsing.length === Object.keys(machineConfigs).length ? `
+                                                            <span class="bg-orange-900 text-orange-300 text-xs px-2 py-1 rounded font-semibold">
+                                                                SHARED: All Machines
+                                                            </span>
+                                                        ` : `
+                                                            <span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded font-semibold mr-2">
+                                                                SHARED: ${machinesUsing.length} machines
+                                                            </span>
+                                                            ${machinesUsing.map(m => `
+                                                                <span class="bg-slate-700 text-slate-300 text-xs px-2 py-1 rounded">
+                                                                    ${m}
+                                                                </span>
+                                                            `).join('')}
+                                                        `}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-blue-900 bg-opacity-20 border border-blue-700 rounded-lg p-4">
+                        <p class="text-blue-300 text-sm">
+                            ⚡ <strong>Understanding Part Usage:</strong>
+                            <span class="bg-blue-900 text-blue-300 text-xs px-2 py-1 rounded ml-2">UNIQUE</span> = Used in only one machine type
+                            • <span class="bg-yellow-900 text-yellow-300 text-xs px-2 py-1 rounded ml-2">SHARED</span> = Used in multiple machines
+                            • <span class="bg-orange-900 text-orange-300 text-xs px-2 py-1 rounded ml-2">SHARED: All</span> = Used in all machines
+                            <br><br>
+                            <strong>Note:</strong> Shared parts limit simultaneous production. You cannot build all machine types at once if they share common parts.
+                            • Hover over parts to see delete option (🗑️)
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render machine detail
+        function renderMachineDetail(machineType) {
+            const machineData = calculateMaxMachines(machineType);
+            const partsForMachine = machineConfigs[machineType];
+            
+            const sortedParts = Object.keys(partsForMachine).sort((a, b) => {
+                const availA = inventory[a] || 0;
+                const availB = inventory[b] || 0;
+                const neededA = partsForMachine[a];
+                const neededB = partsForMachine[b];
+                const possibleA = Math.floor(availA / neededA);
+                const possibleB = Math.floor(availB / neededB);
+                
+                if (machineData.bottleneckPart === a) return -1;
+                if (machineData.bottleneckPart === b) return 1;
+                return possibleA - possibleB;
+            });
+            
+            return `
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <button onclick="showOverview()" class="flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-4 transition-colors font-semibold">
+                            <span>← Back to Overview</span>
+                        </button>
+                        
+                        <h1 class="text-4xl font-bold text-white mb-2">${machineType} - Shortage Report</h1>
+                        <p class="text-slate-400 text-lg">Detailed parts breakdown and production capacity</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg p-6 shadow-lg">
+                            <h3 class="text-blue-100 text-sm font-semibold uppercase tracking-wide mb-2">Machines Buildable</h3>
+                            <div class="text-5xl font-bold text-white mb-1">${machineData.maxMachines}</div>
+                            <p class="text-blue-200 text-sm">with current inventory</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-red-600 to-red-700 rounded-lg p-6 shadow-lg">
+                            <h3 class="text-red-100 text-sm font-semibold uppercase tracking-wide mb-2">Bottleneck Part</h3>
+                            <div class="text-lg font-bold text-white mb-1 break-words">${machineData.bottleneckPart || 'None'}</div>
+                            <p class="text-red-200 text-sm">limiting production capacity</p>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg p-6 shadow-lg">
+                            <h3 class="text-purple-100 text-sm font-semibold uppercase tracking-wide mb-2">Parts Required</h3>
+                            <div class="text-5xl font-bold text-white mb-1">${Object.keys(partsForMachine).length}</div>
+                            <p class="text-purple-200 text-sm">different part types</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-lg shadow-xl overflow-hidden mb-8">
+                        <div class="bg-slate-700 px-6 py-4 border-b border-slate-600">
+                            <h2 class="text-xl font-bold text-white">Parts Breakdown for ${machineType}</h2>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-750">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Part Name</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">Per Machine</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">In Stock</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">Can Build</th>
+                                        <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">Utilization</th>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    ${sortedParts.map(part => {
+                                        const needed = partsForMachine[part];
+                                        const available = inventory[part] || 0;
+                                        const possibleMachines = Math.floor(available / needed);
+                                        const isBottleneck = machineData.bottleneckPart === part;
+                                        const neededForMax = machineData.maxMachines * needed;
+                                        const surplus = Math.max(0, available - neededForMax);
+                                        const utilizationPercent = machineData.maxMachines > 0 ? (neededForMax / available) * 100 : 0;
+                                        
+                                        return `
+                                            <tr class="hover:bg-slate-750 transition-colors ${isBottleneck ? 'bg-red-900 bg-opacity-20' : ''}">
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="text-sm font-medium text-white">${part}</span>
+                                                        ${isBottleneck ? '<span class="bg-red-600 text-white text-xs px-2 py-1 rounded-full font-semibold">BOTTLENECK</span>' : ''}
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-center text-sm text-slate-300">${needed}</td>
+                                                <td class="px-6 py-4 text-center">
+                                                    <input 
+                                                        type="number" 
+                                                        value="${available}"
+                                                        onchange="updateInventory('${part}', this.value)"
+                                                        class="bg-slate-700 text-white text-center px-3 py-1 rounded border border-slate-600 focus:border-blue-500 focus:outline-none w-20 font-semibold"
+                                                    />
+                                                </td>
+                                                <td class="px-6 py-4 text-center">
+                                                    <span class="text-sm font-semibold ${isBottleneck ? 'text-red-400' : 'text-slate-300'}">
+                                                        ${possibleMachines}
+                                                    </span>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="flex-1 bg-slate-700 rounded-full h-2 overflow-hidden">
+                                                            <div
+                                                                class="h-full transition-all ${isBottleneck ? 'bg-red-500' : 'bg-green-500'}"
+                                                                style="width: ${Math.min(100, utilizationPercent)}%"
+                                                            ></div>
+                                                        </div>
+                                                        <span class="text-xs text-slate-400 w-12 text-right">
+                                                            ${utilizationPercent.toFixed(0)}%
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 text-sm">
+                                                    ${isBottleneck ? 
+                                                        '<span class="text-red-400 font-medium">Limiting production</span>' :
+                                                        surplus > 0 ? 
+                                                            `<span class="text-green-400">+${surplus} surplus</span>` :
+                                                            '<span class="text-slate-400">Adequate</span>'
+                                                    }
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-lg p-6 shadow-lg border border-slate-700">
+                        <h3 class="text-lg font-semibold text-white mb-3">Production Summary</h3>
+                        <p class="text-slate-300">
+                            You can build <span class="text-blue-400 font-bold">${machineData.maxMachines} complete ${machineType}s</span> with your current inventory.
+                            ${machineData.bottleneckPart ? 
+                                `<span class="block mt-2">To increase production, order more <span class="text-red-400 font-semibold">${machineData.bottleneckPart}</span>.</span>` : 
+                                ''
+                            }
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.showOverview = function() {
+            selectedMachine = null;
+            render();
+        };
+
+        window.showMachine = function(machineType) {
+            selectedMachine = machineType;
+            render();
+        };
+
+        // Render machine configuration editor
+        function renderMachineEditor() {
+            const allParts = Object.keys(inventory).sort();
+            const machines = Object.keys(machineConfigs).sort();
+            
+            return `
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-8">
+                        <button onclick="hideMachineEditor()" class="flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-4 transition-colors font-semibold">
+                            <span>← Back to Dashboard</span>
+                        </button>
+                        
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-4xl font-bold text-white mb-2">Edit Machine Configurations</h1>
+                                <p class="text-slate-400 text-lg">Set how many of each part is needed per machine. Click machine names to rename.</p>
+                            </div>
+                            <button onclick="addNewMachinePrompt()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded transition-colors font-semibold">
+                                + Add Machine
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-lg shadow-xl overflow-hidden">
+                        <div class="bg-slate-700 px-6 py-4 border-b border-slate-600">
+                            <h2 class="text-xl font-bold text-white">Parts Required Per Machine</h2>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-750">
+                                    <tr>
+                                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase sticky left-0 bg-slate-750">Part Name</th>
+                                        ${machines.map(machine => `
+                                            <th class="px-6 py-4 text-center text-xs font-semibold text-slate-300 uppercase">
+                                                <button 
+                                                    onclick="renameMachinePrompt('${machine}')"
+                                                    class="hover:text-blue-400 transition-colors cursor-pointer"
+                                                    title="Click to rename"
+                                                >
+                                                    ${machine} ✏️
+                                                </button>
+                                            </th>
+                                        `).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-700">
+                                    ${allParts.map(part => `
+                                        <tr class="hover:bg-slate-750 transition-colors">
+                                            <td class="px-6 py-4 sticky left-0 bg-slate-800">
+                                                <span class="text-sm font-medium text-white">${part}</span>
+                                            </td>
+                                            ${machines.map(machine => {
+                                                const qty = (machineConfigs[machine] && machineConfigs[machine][part]) || 0;
+                                                return `
+                                                    <td class="px-6 py-4 text-center">
+                                                        <input 
+                                                            type="number" 
+                                                            value="${qty}"
+                                                            onchange="updateMachineConfig('${machine}', '${part}', this.value)"
+                                                            class="bg-slate-700 text-white text-center px-3 py-1 rounded border border-slate-600 focus:border-blue-500 focus:outline-none w-20"
+                                                            min="0"
+                                                        />
+                                                    </td>
+                                                `;
+                                            }).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-blue-900 bg-opacity-20 border border-blue-700 rounded-lg p-4">
+                        <p class="text-blue-300 text-sm">
+                            💡 <strong>Tips:</strong> 
+                            • Click on machine names (with ✏️) to rename them
+                            • Enter the quantity of each part needed to build ONE machine
+                            • Set to 0 if a part is not used in that machine type
+                            • Changes save automatically
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render add part form
+        function renderAddPart() {
+            return `
+                <div class="max-w-2xl mx-auto mt-20">
+                    <div class="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-3xl font-bold text-white">Add New Part</h2>
+                            <button onclick="hideAddPart()" class="text-slate-400 hover:text-white text-2xl">×</button>
+                        </div>
+                        
+                        <form onsubmit="event.preventDefault(); addNewPart(document.getElementById('partName').value, document.getElementById('partQty').value);" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-300 mb-2">Part Name</label>
+                                <input 
+                                    type="text" 
+                                    id="partName"
+                                    placeholder="e.g., Camera, Excelsense TC11"
+                                    class="w-full bg-slate-700 text-white px-4 py-3 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-300 mb-2">Initial Quantity</label>
+                                <input 
+                                    type="number" 
+                                    id="partQty"
+                                    placeholder="0"
+                                    value="0"
+                                    min="0"
+                                    class="w-full bg-slate-700 text-white px-4 py-3 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div class="bg-blue-900 bg-opacity-20 border border-blue-700 rounded p-4">
+                                <p class="text-blue-300 text-sm">
+                                    💡 After adding the part, go to <strong>Edit Machines</strong> to set how many are needed per machine.
+                                </p>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded font-semibold transition-colors">
+                                    Add Part
+                                </button>
+                                <button type="button" onclick="hideAddPart()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-semibold transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render add order form
+        function renderAddOrder() {
+            const allParts = Object.keys(inventory).sort();
+            
+            return `
+                <div class="max-w-2xl mx-auto mt-20">
+                    <div class="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-3xl font-bold text-white">📦 Add Order</h2>
+                            <button onclick="hideAddOrder()" class="text-slate-400 hover:text-white text-2xl">×</button>
+                        </div>
+                        
+                        <form onsubmit="event.preventDefault(); addOrder(document.getElementById('orderPart').value, document.getElementById('orderQty').value, document.getElementById('orderDate').value);" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-300 mb-2">Part Name</label>
+                                <select 
+                                    id="orderPart"
+                                    class="w-full bg-slate-700 text-white px-4 py-3 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                    required
+                                >
+                                    <option value="">-- Select Part --</option>
+                                    ${allParts.map(part => `
+                                        <option value="${part}">${part}</option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-300 mb-2">Quantity Ordered</label>
+                                <input 
+                                    type="number" 
+                                    id="orderQty"
+                                    placeholder="e.g., 50"
+                                    min="1"
+                                    class="w-full bg-slate-700 text-white px-4 py-3 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-300 mb-2">Expected Arrival Date</label>
+                                <input 
+                                    type="date" 
+                                    id="orderDate"
+                                    class="w-full bg-slate-700 text-white px-4 py-3 rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                                    required
+                                />
+                            </div>
+
+                            <div class="bg-orange-900 bg-opacity-20 border border-orange-700 rounded p-4">
+                                <p class="text-orange-300 text-sm">
+                                    📦 <strong>Track incoming inventory:</strong> This helps you see future capacity when ordered parts arrive.
+                                </p>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded font-semibold transition-colors">
+                                    Add Order
+                                </button>
+                                <button type="button" onclick="hideAddOrder()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded font-semibold transition-colors">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function render() {
+            let html;
+            if (addingOrder) {
+                html = renderAddOrder();
+            } else if (addingPart) {
+                html = renderAddPart();
+            } else if (editingMachines) {
+                html = renderMachineEditor();
+            } else if (selectedMachine) {
+                html = renderMachineDetail(selectedMachine);
+            } else {
+                html = renderOverview();
+            }
+            document.getElementById('app').innerHTML = html;
+        }
+
+        // Initialize and start
+        async function start() {
+            try {
+                await initializeData();
+                listenToInventory();
+                listenToMachines();
+                listenToOrders();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('app').innerHTML = `
+                    <div class="max-w-2xl mx-auto mt-20">
+                        <div class="bg-red-900 bg-opacity-20 border border-red-700 rounded-lg p-6">
+                            <h2 class="text-2xl font-bold text-red-400 mb-2">Error Connecting to Firebase</h2>
+                            <p class="text-red-300 mb-4">${error.message}</p>
+                            <button onclick="location.reload()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        start();
+    </script>
+</body>
+</html>
